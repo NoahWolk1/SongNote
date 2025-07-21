@@ -1,5 +1,52 @@
 # Fullstack monorepo template feat. Expo, Turbo, Next.js, Convex, Clerk
 
+
+## Quick Setup Guide
+
+### 1. Install dependencies
+
+```sh
+pnpm install
+```
+
+### 2. Backend (Convex) Setup
+- Go to `packages/backend` and run:
+  ```sh
+  pnpm run setup
+  ```
+- Follow prompts to log in and create a Convex Cloud project (free tier available).
+- If you see errors about `convex.json`, create an empty file: `{}` in `packages/backend/convex.json`.
+- Run `pnpm install` in `packages/backend` if you see node_modules warnings.
+- Run `pnpm run dev` to start the backend locally.
+
+### 3. Environment Variables
+- For Expo (native): create `apps/native/.env.local` with:
+  ```
+  EXPO_PUBLIC_CONVEX_URL=https://<your-convex-cloud>.convex.cloud
+  EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=<your-clerk-publishable-key>
+  ```
+- For Web: create `apps/web/.env.local` with:
+  ```
+  NEXT_PUBLIC_CONVEX_URL=https://<your-convex-cloud>.convex.cloud
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<your-clerk-publishable-key>
+  CLERK_SECRET_KEY=<your-clerk-secret-key>
+  ```
+
+### 4. Running Apps
+- From the repo root, run:
+  ```sh
+  npm run dev
+  ```
+- This will start backend, web, and native apps. Use arrow keys to switch logs.
+
+### 5. Deploying
+- To deploy backend to Convex Cloud:
+  ```sh
+  cd packages/backend && npx convex deploy
+  ```
+- Update your client `.env.local` files with the new Convex Cloud URL.
+
+
 This is a modern TypeScript monorepo template with AI web and native apps
 featuring:
 

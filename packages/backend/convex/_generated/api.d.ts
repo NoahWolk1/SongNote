@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as notes from "../notes.js";
 import type * as openai from "../openai.js";
+import type * as songs from "../songs.js";
 import type * as utils from "../utils.js";
 
 /**
@@ -28,6 +29,7 @@ import type * as utils from "../utils.js";
 declare const fullApi: ApiFromModules<{
   notes: typeof notes;
   openai: typeof openai;
+  songs: typeof songs;
   utils: typeof utils;
 }>;
 export declare const api: FilterApi<

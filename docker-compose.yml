@@ -1,0 +1,45 @@
+# FREE AI Singer Services
+# All services use completely open-source, free technologies
+version: '3.8'
+
+services:
+  # Basic Pitch - FREE melody extraction from humming
+  basic-pitch:
+    build: ./docker/basic-pitch
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./tmp/audio:/app/tmp
+    environment:
+      - PORT=8001
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Musical TTS Singing - Enhanced text-to-singing with OpenAI TTS
+  coqui-tts:
+    build: ./docker/coqui-tts
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./tmp/audio:/app/tmp
+      - ./docker/coqui-tts/models:/app/models
+    environment:
+      - PORT=8002
+      - MODELS_PATH=/app/models
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  audio_cache:
+    driver: local
+
+networks:
+  default:
+    name: ai-singer-network

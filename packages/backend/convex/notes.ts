@@ -7,36 +7,36 @@ export const getUserId = async (ctx: { auth: Auth }) => {
   return (await ctx.auth.getUserIdentity())?.subject;
 };
 
-// Get all notes for a specific user
+// Get all songs for a specific user (legacy endpoint for notes compatibility)
 export const getNotes = query({
   args: {},
   handler: async (ctx) => {
     const userId = await getUserId(ctx);
     if (!userId) return null;
 
-    const notes = await ctx.db
-      .query("notes")
+    const songs = await ctx.db
+      .query("songs")
       .filter((q) => q.eq(q.field("userId"), userId))
       .collect();
 
-    return notes;
+    return songs;
   },
 });
 
-// Get note for a specific note
+// Get song for a specific song (legacy endpoint for notes compatibility)
 export const getNote = query({
   args: {
-    id: v.optional(v.id("notes")),
+    id: v.optional(v.id("songs")),
   },
   handler: async (ctx, args) => {
     const { id } = args;
     if (!id) return null;
-    const note = await ctx.db.get(id);
-    return note;
+    const song = await ctx.db.get(id);
+    return song;
   },
 });
 
-// Create a new note for a user
+// Create a new song for a user (legacy endpoint for notes compatibility)
 export const createNote = mutation({
   args: {
     title: v.string(),
@@ -46,23 +46,31 @@ export const createNote = mutation({
   handler: async (ctx, { title, content, isSummary }) => {
     const userId = await getUserId(ctx);
     if (!userId) throw new Error("User not found");
-    const noteId = await ctx.db.insert("notes", { userId, title, content });
+    const songId = await ctx.db.insert("songs", { 
+      userId, 
+      title, 
+      lyrics: content,  // Map content to lyrics
+      voiceStyle: "pop",  // Default voice style
+      mood: "happy",  // Default mood
+      isHummingBased: false,  // Default to text-only
+      createdAt: Date.now()
+    });
 
     if (isSummary) {
       await ctx.scheduler.runAfter(0, internal.openai.summary, {
-        id: noteId,
+        id: songId,
         title,
         content,
       });
     }
 
-    return noteId;
+    return songId;
   },
 });
 
 export const deleteNote = mutation({
   args: {
-    noteId: v.id("notes"),
+    noteId: v.id("songs"),
   },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.noteId);

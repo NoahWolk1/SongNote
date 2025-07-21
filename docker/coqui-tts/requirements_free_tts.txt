@@ -1,0 +1,17 @@
+# Free TTS Dependencies for Musical Singing Service
+flask
+flask-cors
+numpy
+scipy
+soundfile
+
+# Free TTS engines
+gtts>=2.3.0          # Google Text-to-Speech (completely free)
+edge-tts>=6.1.0      # Microsoft Edge TTS (free)
+
+# Audio processing (optional but recommended)
+librosa>=0.10.0      # For audio format conversion
+ffmpeg-python       # Alternative for audio conversion
+
+# Alternative lightweight options
+pydub               # Audio manipulation

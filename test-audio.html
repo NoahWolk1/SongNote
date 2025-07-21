@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TTS Audio Test</title>
+</head>
+<body>
+    <h1>TTS Audio Test</h1>
+    
+    <h2>Edge TTS Test (No Music)</h2>
+    <button onclick="playEdgeTTSAudio()">Play Edge TTS Test</button>
+    <audio id="edgeAudio" controls style="display: block; margin: 10px 0;">
+        <source type="audio/wav" />
+    </audio>
+    
+    <h2>Gemini TTS Test (With Barely Audible Background Music)</h2>
+    <button onclick="playGeminiTTSAudio()">Play Gemini TTS Test</button>
+    <audio id="geminiAudio" controls style="display: block; margin: 10px 0;">
+        <source type="audio/wav" />
+    </audio>
+    
+    <h2>Debug: Vocals Only (No Music Processing)</h2>
+    <button onclick="playVocalsOnlyTest()">Play Vocals Only Test</button>
+    <audio id="vocalsOnlyAudio" controls style="display: block; margin: 10px 0;">
+        <source type="audio/wav" />
+    </audio>
+    
+    <h2>Debug: With Music Processing</h2>
+    <button onclick="playWithMusicTest()">Play With Music Test</button>
+    <audio id="withMusicAudio" controls style="display: block; margin: 10px 0;">
+        <source type="audio/wav" />
+    </audio>
+    <div>
+        Vocal Volume: <input type="range" id="vocalVolume" min="0.5" max="1.0" step="0.1" value="1.0" onchange="updateVocalLabel()">
+        <span id="vocalLabel">1.0</span><br>
+        Music Volume: <input type="range" id="musicVolume" min="0.0" max="0.1" step="0.01" value="0.02" onchange="updateMusicLabel()">
+        <span id="musicLabel">0.02</span><br>
+        <button onclick="playCustomMixAudio()">Play Custom Mix Test</button>
+    </div>
+    <audio id="customAudio" controls style="display: block; margin: 10px 0;">
+        <source type="audio/wav" />
+    </audio>
+    
+    <div id="status"></div>
+    
+    <script>
+        async function playEdgeTTSAudio() {
+            const status = document.getElementById('status');
+            status.textContent = 'Generating Edge TTS audio...';
+            
+            try {
+                const response = await fetch('http://localhost:8002/generate-singing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        lyrics: "Hello this is a test, can you hear my voice clearly",
+                        voice_style: "pop",
+                        mood: "happy",
+                        include_music: false,
+                        tts_engine: "edge_tts"
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.audio_url) {
+                    const audio = document.getElementById('edgeAudio');
+                    audio.src = data.audio_url;
+                    audio.play();
+                    status.textContent = 'Playing Edge TTS audio...';
+                } else {
+                    status.textContent = 'Error: No audio URL received';
+                }
+            } catch (error) {
+                status.textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function playGeminiTTSAudio() {
+            const status = document.getElementById('status');
+            status.textContent = 'Generating Gemini TTS audio with barely audible background music...';
+            
+            try {
+                const response = await fetch('http://localhost:8002/generate-singing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        lyrics: "Hello this is a test song with background music",
+                        voice_style: "pop",
+                        mood: "happy",
+                        include_music: true,
+                        tts_engine: "gemini",
+                        vocal_volume: 1.0,
+                        music_volume: 0.02
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.audio_url) {
+                    const audio = document.getElementById('geminiAudio');
+                    audio.src = data.audio_url;
+                    audio.play();
+                    status.textContent = 'Playing Gemini TTS with enhanced vocal clarity...';
+                } else {
+                    status.textContent = 'Error: No audio URL received';
+                }
+            } catch (error) {
+                status.textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function playVocalsOnlyTest() {
+            const status = document.getElementById('status');
+            status.textContent = 'Testing vocals only (no music processing)...';
+            
+            try {
+                const response = await fetch('http://localhost:8002/generate-singing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        lyrics: "Hello this is vocals only test",
+                        voice_style: "pop",
+                        mood: "happy",
+                        include_music: false,
+                        tts_engine: "edge_tts"
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.audio_url) {
+                    const audio = document.getElementById('vocalsOnlyAudio');
+                    audio.src = data.audio_url;
+                    audio.play();
+                    status.textContent = 'Playing vocals only...';
+                } else {
+                    status.textContent = 'Error: No audio URL received';
+                }
+            } catch (error) {
+                status.textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function playWithMusicTest() {
+            const status = document.getElementById('status');
+            status.textContent = 'Testing with music processing (debug mode)...';
+            
+            try {
+                const response = await fetch('http://localhost:8002/generate-singing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        lyrics: "Hello this is with music test",
+                        voice_style: "pop",
+                        mood: "happy",
+                        include_music: true,
+                        tts_engine: "edge_tts",
+                        vocal_volume: 1.0,
+                        music_volume: 0.02
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.audio_url) {
+                    const audio = document.getElementById('withMusicAudio');
+                    audio.src = data.audio_url;
+                    audio.play();
+                    status.textContent = 'Playing with music (check console for debug info)...';
+                } else {
+                    status.textContent = 'Error: No audio URL received';
+                }
+            } catch (error) {
+                status.textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        function updateVocalLabel() {
+            const vocal = document.getElementById('vocalVolume');
+            document.getElementById('vocalLabel').textContent = vocal.value;
+        }
+        
+        function updateMusicLabel() {
+            const music = document.getElementById('musicVolume');
+            document.getElementById('musicLabel').textContent = music.value;
+        }
+        
+        async function playCustomMixAudio() {
+            const status = document.getElementById('status');
+            const vocalVol = parseFloat(document.getElementById('vocalVolume').value);
+            const musicVol = parseFloat(document.getElementById('musicVolume').value);
+            
+            status.textContent = `Generating custom mix (vocals: ${vocalVol}, music: ${musicVol})...`;
+            
+            try {
+                const response = await fetch('http://localhost:8002/generate-singing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        lyrics: "This is a custom mix test with adjustable levels",
+                        voice_style: "pop",
+                        mood: "happy",
+                        include_music: true,
+                        tts_engine: "edge_tts",
+                        vocal_volume: vocalVol,
+                        music_volume: musicVol
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.audio_url) {
+                    const audio = document.getElementById('customAudio');
+                    audio.src = data.audio_url;
+                    audio.play();
+                    status.textContent = `Playing custom mix (vocals: ${vocalVol}, music: ${musicVol})`;
+                } else {
+                    status.textContent = 'Error: No audio URL received';
+                }
+            } catch (error) {
+                status.textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

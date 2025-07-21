@@ -5,26 +5,37 @@ import { api } from "@packages/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import Image from "next/image";
 import { Fragment, useRef, useState } from "react";
-import Checkbox from "./Checkbox";
 
 export default function CreateNote() {
   const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [isChecked, setIsChecked] = useState<boolean>(false);
+  const [lyrics, setLyrics] = useState("");
 
   const cancelButtonRef = useRef(null);
 
-  const createNote = useMutation(api.notes.createNote);
+  const createSong = useMutation(api.songs.createSong);
   const openaiKeySet = useQuery(api.openai.openaiKeySet) ?? true;
 
-  const createUserNote = async () => {
-    await createNote({
-      title,
-      content,
-      isSummary: isChecked,
+  const createUserSong = async () => {
+    if (!lyrics.trim()) {
+      alert("Please write your lyrics first");
+      return;
+    }
+
+    // Generate a title from the first line of lyrics
+    const firstLine = lyrics.split('\n')[0].slice(0, 50);
+    const generatedTitle = firstLine.length < lyrics.split('\n')[0].length 
+      ? firstLine + "..." 
+      : firstLine || "Untitled Song";
+
+    await createSong({
+      title: generatedTitle,
+      lyrics,
+      voiceStyle: "pop", // Default values
+      mood: "happy",
+      isHummingBased: false,
     });
     setOpen(false);
+    setLyrics("");
   };
 
   return (
@@ -44,7 +55,7 @@ export default function CreateNote() {
           />
           <span className="text-[17px] sm:text-3xl not-italic font-medium leading-[79%] tracking-[-0.75px]">
             {" "}
-            New Note
+            Write Lyrics
           </span>
         </button>
       </div>
@@ -86,58 +97,28 @@ export default function CreateNote() {
                         as="h3"
                         className="text-black text-center text-xl sm:text-left sm:text-[35px] pb-6 sm:pb-8 not-italic font-semibold leading-[90.3%] tracking-[-0.875px]"
                       >
-                        Create New Note
+                        Write Lyrics
                       </Dialog.Title>
-                      <div className="mt-2 space-y-3">
-                        <div className="pb-2">
-                          <label
-                            htmlFor="title"
-                            className=" text-black text-[17px] sm:text-2xl not-italic font-medium leading-[90.3%] tracking-[-0.6px]"
-                          >
-                            Title
-                          </label>
-                          <div className="mt-2">
-                            <input
-                              id="title"
-                              name="title"
-                              type="text"
-                              placeholder="Note Title"
-                              autoComplete="title"
-                              value={title}
-                              onChange={(e) => setTitle(e.target.value)}
-                              className="border shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] rounded-lg border-solid border-[#D0D5DD] bg-white w-full py-2.5 px-[14px] text-black text-[17px] not-italic font-light leading-[90.3%] tracking-[-0.425px] sm:text-2xl"
-                            />
-                          </div>
-                        </div>
-
+                      <div className="mt-2">
                         <div className="">
                           <label
-                            htmlFor="description"
+                            htmlFor="lyrics"
                             className=" text-black text-[17px] sm:text-2xl not-italic font-medium leading-[90.3%] tracking-[-0.6px]"
                           >
-                            The Note
+                            Your Lyrics
                           </label>
                           <div className="mt-2 pb-[18px]">
                             <textarea
-                              id="description"
-                              name="description"
-                              rows={8}
-                              placeholder="Start your note "
+                              id="lyrics"
+                              name="lyrics"
+                              rows={12}
+                              placeholder="Start writing your lyrics here..."
                               className="block w-full rounded-md border-0 py-1.5  border-[#D0D5DD] text-2xl shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600  sm:leading-6 text-black text-[17px] not-italic font-light leading-[90.3%] tracking-[-0.425px] sm:text-2xl"
-                              value={content}
-                              onChange={(e) => setContent(e.target.value)}
+                              value={lyrics}
+                              onChange={(e) => setLyrics(e.target.value)}
                             />
                           </div>
-                          <p className="text-black text-[17px] sm:text-2xl not-italic font-medium leading-[90.3%] tracking-[-0.6px]">
-                            AI Features
-                          </p>
                         </div>
-
-                        <Checkbox
-                          openaiKeySet={openaiKeySet}
-                          isChecked={isChecked}
-                          checkHandler={() => setIsChecked(!isChecked)}
-                        />
                       </div>
                     </div>
                   </div>
@@ -145,9 +126,9 @@ export default function CreateNote() {
                     <button
                       type="button"
                       className="button text-white text-center text-[17px] sm:text-2xl not-italic font-semibold leading-[90.3%] tracking-[-0.6px] px-[70px] py-2"
-                      onClick={createUserNote}
+                      onClick={createUserSong}
                     >
-                      Create
+                      Save Lyrics
                     </button>
                   </div>
                 </Dialog.Panel>

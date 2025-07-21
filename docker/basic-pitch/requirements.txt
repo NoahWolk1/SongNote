@@ -1,0 +1,8 @@
+# FREE Basic Pitch dependencies - completely open source
+basic-pitch==0.4.0
+flask==2.3.3
+flask-cors==4.0.0
+numpy==1.24.3
+librosa==0.10.1
+soundfile==0.12.1
+tensorflow==2.13.0
