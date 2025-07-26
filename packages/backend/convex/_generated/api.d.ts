@@ -13,6 +13,8 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as http from "../http.js";
+import type * as index from "../index.js";
 import type * as notes from "../notes.js";
 import type * as openai from "../openai.js";
 import type * as songs from "../songs.js";
@@ -27,6 +29,8 @@ import type * as utils from "../utils.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  http: typeof http;
+  index: typeof index;
   notes: typeof notes;
   openai: typeof openai;
   songs: typeof songs;
