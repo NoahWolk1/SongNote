@@ -43,10 +43,11 @@ export const createSong = mutation({
     lyrics: v.string(),
     voiceStyle: v.string(),
     mood: v.optional(v.string()),
+    pitch: v.optional(v.number()),
     isHummingBased: v.boolean(),
     hummingAudioUrl: v.optional(v.string()),
   },
-  handler: async (ctx, { title, lyrics, voiceStyle, mood, isHummingBased, hummingAudioUrl }) => {
+  handler: async (ctx, { title, lyrics, voiceStyle, mood, pitch, isHummingBased, hummingAudioUrl }) => {
     const userId = await getUserId(ctx);
     if (!userId) throw new Error("User not found");
     
@@ -56,6 +57,7 @@ export const createSong = mutation({
       lyrics, 
       voiceStyle,
       mood,
+      pitch,
       isHummingBased,
       hummingAudioUrl,
       createdAt: Date.now()
@@ -83,10 +85,11 @@ export const updateSong = mutation({
     lyrics: v.optional(v.string()),
     voiceStyle: v.optional(v.string()),
     mood: v.optional(v.string()),
+    pitch: v.optional(v.number()),
     generatedSongUrl: v.optional(v.string()),
     hummingAudioUrl: v.optional(v.string()),
   },
-  handler: async (ctx, { id, title, lyrics, voiceStyle, mood, generatedSongUrl, hummingAudioUrl }) => {
+  handler: async (ctx, { id, title, lyrics, voiceStyle, mood, pitch, generatedSongUrl, hummingAudioUrl }) => {
     const userId = await getUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
@@ -99,6 +102,7 @@ export const updateSong = mutation({
     if (lyrics !== undefined) updates.lyrics = lyrics;
     if (voiceStyle !== undefined) updates.voiceStyle = voiceStyle;
     if (mood !== undefined) updates.mood = mood;
+    if (pitch !== undefined) updates.pitch = pitch;
     if (generatedSongUrl !== undefined) updates.generatedSongUrl = generatedSongUrl;
     if (hummingAudioUrl !== undefined) updates.hummingAudioUrl = hummingAudioUrl;
 
@@ -167,133 +171,68 @@ export const updateSongWithUploadedAudio = mutation({
   },
 });
 
-// Simplified workflow: Create song with optional humming (ALL FREE)
+// Create song with AI singing generation using Convex
 export const createSongWithAI = action({
   args: {
     title: v.string(),
     lyrics: v.string(),
     voiceStyle: v.string(),
     mood: v.optional(v.string()),
-    hummingAudioBase64: v.optional(v.string()), // Optional humming
+    pitch: v.optional(v.number()),
+    includeMusic: v.optional(v.boolean()),
   },
-  handler: async (ctx, { title, lyrics, voiceStyle, mood, hummingAudioBase64 }) => {
+  handler: async (ctx, { title, lyrics, voiceStyle, mood, pitch, includeMusic }) => {
+    const userId = await getUserId(ctx);
+    if (!userId) throw new Error("User not found");
     
-    let melodyData = null;
-    
-    // Step 1: Extract melody if humming is provided (OPTIONAL + FREE)
-    if (hummingAudioBase64) {
-      try {
-        console.log("Extracting melody from humming...");
-        melodyData = await extractMelodyUsingBasicPitch(hummingAudioBase64);
-      } catch (error) {
-        console.error("Melody extraction failed, continuing without melody:", error);
-      }
-    }
-    
-    // Step 2: Generate singing voice (FREE)
     try {
-      console.log("Generating singing voice...");
-      const audioUrl = await generateSingingAudioFree(lyrics, voiceStyle, mood, melodyData);
+      console.log("🎤 Generating singing with Convex AI Singer...");
       
-      // Create song record with all data
-      const songData = {
+      // Generate singing using our Convex AI singer
+      const singingResult = await ctx.runAction(api.ai_singer.generateSinging, {
+        lyrics,
+        voiceStyle,
+        mood: mood || "happy",
+        pitchAdjustment: pitch || 0,
+        includeMusic: includeMusic ?? true,
+      });
+      
+      if (!singingResult.success) {
+        throw new Error(singingResult.error || "Failed to generate singing");
+      }
+      
+      // Create the song record
+      const songId = await ctx.runMutation(api.songs.createSong, {
         title,
         lyrics,
         voiceStyle,
-        mood,
-        isHummingBased: !!hummingAudioBase64,
-        hummingAudioUrl: hummingAudioBase64 || undefined,
-        extractedMelody: melodyData,
-        generatedSongUrl: audioUrl,
-        createdAt: Date.now()
-      };
+        mood: mood || "happy",
+        pitch: pitch || 0,
+        isHummingBased: false,
+      });
       
-      // Use direct database access in action (simplified approach)
-      const userId = await getUserId(ctx);
-      if (!userId) throw new Error("User not found");
+      // Update the song with the generated audio
+      const audioDataUrl = `data:audio/wav;base64,${singingResult.audio}`;
+      await ctx.runMutation(api.songs.updateSong, {
+        id: songId,
+        generatedSongUrl: audioDataUrl,
+      });
       
-      // For now, return the data - we'll store it in the frontend
-      return { 
+      console.log("✅ Song created successfully with AI singing");
+      
+      return {
         success: true,
-        songData: { ...songData, userId },
-        melody: melodyData,
-        audioUrl 
+        songId,
+        audioUrl: audioDataUrl,
+        duration: singingResult.duration_seconds,
+        synthesisMethod: singingResult.synthesis_method,
       };
       
     } catch (error) {
-      console.error("Song generation failed:", error);
-      throw new Error("Failed to generate song");
+      console.error("❌ Song generation failed:", error);
+      throw new Error(`Failed to generate song: ${error}`);
     }
   },
 });
 
-// FREE IMPLEMENTATIONS - Open Source Only
 
-async function extractMelodyUsingBasicPitch(audioBase64: string) {
-  // FREE: Basic Pitch is completely open source
-  // Option 1: Self-hosted service (recommended)
-  try {
-    const response = await fetch("http://localhost:8001/extract-melody", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ audio: audioBase64 })
-    });
-    
-    if (!response.ok) {
-      throw new Error("Basic Pitch service failed");
-    }
-    
-    return await response.json();
-  } catch (error) {
-    // Option 2: Fallback to simulated melody (for demo purposes)
-    console.warn("Basic Pitch service unavailable, using demo melody");
-    return {
-      notes: [
-        { pitch: 60, start_time: 0.0, end_time: 0.5, velocity: 80 },
-        { pitch: 62, start_time: 0.5, end_time: 1.0, velocity: 75 },
-        { pitch: 64, start_time: 1.0, end_time: 1.5, velocity: 70 },
-        { pitch: 65, start_time: 1.5, end_time: 2.0, velocity: 85 }
-      ],
-      tempo: 120,
-      key: "C major"
-    };
-  }
-}
-
-async function generateSingingAudioFree(
-  lyrics: string, 
-  voiceStyle: string, 
-  mood?: string, 
-  melody?: any
-) {
-  // FREE OPTION 1: Coqui TTS (completely free, open source)
-  try {
-    const response = await fetch("http://localhost:8002/generate-singing", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        lyrics, 
-        voice_style: voiceStyle, 
-        mood, 
-        melody 
-      })
-    });
-    
-    if (!response.ok) {
-      throw new Error("Coqui TTS service failed");
-    }
-    
-    const result = await response.json();
-    return result.audio_url;
-  } catch (error) {
-    // FREE FALLBACK: Web Speech API simulation
-    console.warn("Coqui TTS service unavailable, using demo audio");
-    return generateDemoAudio(lyrics, voiceStyle);
-  }
-}
-
-function generateDemoAudio(lyrics: string, voiceStyle: string) {
-  // For demo purposes - returns a data URL
-  // In production, this would use Web Speech API or local TTS
-  return `data:audio/wav;base64,demo-audio-for-${encodeURIComponent(lyrics.substring(0, 20))}-${voiceStyle}`;
-}

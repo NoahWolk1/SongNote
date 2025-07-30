@@ -25,6 +25,7 @@ export default defineSchema({
     audioFileId: v.optional(v.id("_storage")), // Reference to stored audio file
     voiceStyle: v.string(), // "male", "female", "child", etc.
     mood: v.optional(v.string()), // "happy", "sad", "energetic", etc.
+    pitch: v.optional(v.number()), // Pitch adjustment (-12 to +12 semitones)
     summary: v.optional(v.string()), // AI-generated summary (legacy)
     
     // Metadata

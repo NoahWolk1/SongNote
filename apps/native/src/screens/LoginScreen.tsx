@@ -11,7 +11,8 @@ import {
 } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
 
-const LoginScreen = ({ navigation }) => {
+const LoginScreen = ({ navigation }: { navigation?: any }) => {
+  const nav = navigation || { navigate: () => {} };
   const { isSignedIn } = useAuth();
 
   const { startOAuthFlow: startGoogleAuthFlow } = useOAuth({
@@ -23,9 +24,9 @@ const LoginScreen = ({ navigation }) => {
 
   useEffect(() => {
     if (isSignedIn) {
-      navigation.navigate("NotesDashboardScreen");
+      nav.navigate("NotesDashboardScreen");
     }
-  }, [isSignedIn, navigation.navigate]);
+  }, [isSignedIn, nav]);
 
   const onPress = async (authType: string) => {
     try {
@@ -36,7 +37,7 @@ const LoginScreen = ({ navigation }) => {
 
         if (createdSessionId) {
           await setActive({ session: createdSessionId });
-          navigation.navigate("NotesDashboardScreen");
+          nav.navigate("NotesDashboardScreen");
         } else {
           // Handle sign-up flow for new users
           if (signUp && signUp.status === "missing_requirements") {
@@ -58,7 +59,7 @@ const LoginScreen = ({ navigation }) => {
 
                 if (newSessionId) {
                   await setActive({ session: newSessionId });
-                  navigation.navigate("NotesDashboardScreen");
+                  nav.navigate("NotesDashboardScreen");
                 }
               } catch (_updateError) {
                 Alert.alert(
@@ -76,7 +77,7 @@ const LoginScreen = ({ navigation }) => {
 
                 if (newSessionId) {
                   await setActive({ session: newSessionId });
-                  navigation.navigate("NotesDashboardScreen");
+                  nav.navigate("NotesDashboardScreen");
                 }
               } catch (_signUpError) {
                 // Sign-up error handled silently
@@ -97,7 +98,7 @@ const LoginScreen = ({ navigation }) => {
 
         if (createdSessionId) {
           await setActive({ session: createdSessionId });
-          navigation.navigate("NotesDashboardScreen");
+          nav.navigate("NotesDashboardScreen");
         }
       }
     } catch (err) {
